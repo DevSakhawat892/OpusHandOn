@@ -1,0 +1,207 @@
+﻿@model IEnumerable<OpusHandOn.Models.Dto.Sales>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal">
+   Add Item
+</button>
+
+
+<table class="table table-striped table-borderless">
+    <thead>
+        <tr>
+           @* <th>
+                @Html.DisplayNameFor(model => model.ProductCode)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ProductName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UnitPrice)
+            </th>*@
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="ProdTable"></tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+   <div class="modal-dialog">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Add New Product</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+         </div>
+         <div class="modal-body">
+            <form method="post">
+               <div class="form-group">
+                  <input name="Id" id="Id" hidden />
+                  <label name="ProductCode" class="control-label">Product Code</label>
+                  <input id="ProductCode" class="form-control" />
+               </div>
+               <div class="form-group">
+                  <label name="ProductName" class="control-label">Product Name</label>
+                  <input id="ProductName" class="form-control" />
+               </div>
+               <div class="form-group">
+                  <label name="UnitPrice" class="control-label">Unit Price</label>
+                  <input id="UnitPrice" class="form-control" />
+               </div>
+            </form>
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="modalClear()" data-bs-dismiss="modal">Close</button>
+            <button type="button" id="btnSave" onclick="Save()" class="btn btn-primary">Save</button>
+            <button type="button" id="btnUpdate" onclick="Update()" class="btn btn-primary">Update</button>
+         </div>
+      </div>
+   </div>
+</div>
+
+@section Scripts{
+   <script>
+      $(function () {
+         getProducts()
+         $("#btnSave").show();
+         $("#btnUpdate").hide();
+      });
+      var baseUrl = "http://localhost:5217/";
+
+      // GetAll Product
+      function getProducts() {
+         $.ajax({
+            url: baseUrl + "Products/GetAll",
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json",
+            success: function (res) {
+               var h = "";
+               $.each(res.data, function (k, v) {
+                  h += "<tr>"
+                  h += "<td>" + v.productCode + "</td>"
+                  h += "<td>" + v.productName + "</td>"
+                  h += "<td>" + v.unitPrice + "</td>"
+                  h += "<td><button id='btnEdit' class='btn btn-info me-2'data-bs-toggle='modal' data-bs-target='#productModal' onclick='Edit(" + v.id + ")'>Edit</button>"
+                  h += "<button id='btnRemove' class='btn btn-danger' onclick='Delete(" + v.id + ")'>Delete</button></td>"
+                  h += "</tr>"
+                  $("#ProdTable").html(h);
+               })
+
+            },
+            error: function (err) {
+               console.log(err);
+            }
+         });
+      }
+
+      // Save product
+      function Add() {
+
+         var product = {
+            productCode: $("#ProductCode").val(),
+            productName: $("#ProductName").val(),
+            unitPrice: $("#UnitPrice").val()
+         };
+         $.ajax({
+            url: baseUrl + "Products/Create",
+            method: "POST",
+            type: "application/json",
+            dataType: "JSON",
+            data: product,
+            success: function (res) {
+               console.log(res);
+               getProducts();
+               modalHidden();
+            },
+            error: function (er) {
+               console.log(er)
+            }
+         });
+      }
+
+      // Delete reacord from table.
+      function Delete(id) {
+         if (confirm('Are you sure, You want to delete this record?')) {
+            $.ajax({
+               /*url: "/Products/Delete/" + id,*/
+               url: "/Products/Delete?id=" + id,
+               type: "post",
+               contentType: "application/json",
+               dataType: "JSON",
+               success: function (res) {
+                  console.log(res.data)
+                  getProducts();
+               },
+               error: function (er) {
+                  console.log(er)
+               }
+            })
+         }
+      }
+
+      // Update Record
+      function Edit(id) {
+         $("#btnSave").hide();
+         $("#btnUpdate").show();
+         $.ajax({
+            url: "/Products/Edit?id=" + id,
+            type: "GET",
+            contentType: "application/json",
+            dataType: "json",
+            success: function (res) {
+               $("#Id").val(res.id);
+               $("#ProductCode").val(res.productCode);
+               $("#ProductName").val(res.productName);
+               $("#UnitPrice").val(res.unitPrice);
+            },
+            error: function (err) {
+               alert(err);
+            }
+         });
+      }
+
+      function Update() {
+         var product = {
+            id: $("#Id").val(),
+            productCode: $("#ProductCode").val(),
+            productName: $("#ProductName").val(),
+            unitPrice: $("#UnitPrice").val()
+         };
+         $.ajax({
+            url: baseUrl + "Products/Update",
+            method: "POST",
+            type: "application/json",
+            dataType: "JSON",
+            data: product,
+            success: function (res) {
+               console.log(res);
+               getProducts();
+               modalHidden();
+            },
+            error: function (er) {
+               console.log(er)
+            }
+         });
+      }
+
+
+      // Hiden modal
+      function modalHidden() {
+         modalClear();
+         $("#productModal").modal('hide');
+      }
+
+      // Clear modal input fields
+      function modalClear() {
+         $("#Id").val('');
+         $("#ProductCode").val('');
+         $("#ProductName").val('');
+         $("#UnitPrice").val('');
+         $("#btnSave").show();
+         $("#btnUpdate").hide();
+      }
+   </script>
+}
