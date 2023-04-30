@@ -26,6 +26,13 @@ namespace OpusHandOn.Controllers
          return Json(new { data = productList });
       }
 
+      [HttpGet]
+      public IActionResult Get(int id)
+      {
+         Product product = _context.Product.FirstOrDefault(p => p.Id == id);
+         return Json(product);
+      }
+
       [HttpPost]
       public JsonResult Create(Product model)
       {
